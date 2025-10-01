@@ -1,0 +1,38 @@
+# Systemd user service for keyledsd
+# 
+# Installation:
+#   1. Copy this file to ~/.config/systemd/user/keyledsd.service
+#   2. Run: systemctl --user daemon-reload
+#   3. Run: systemctl --user enable --now keyledsd.service
+#
+# This example assumes keyledsd is installed to /usr/local/bin
+# Adjust paths if you installed elsewhere
+
+[Unit]
+Description=Keyleds RGB keyboard daemon for Logitech keyboards
+Documentation=https://github.com/spectras/keyleds
+After=graphical-session.target
+
+[Service]
+Type=simple
+
+# Set library path if keyledsd is installed to /usr/local
+Environment="LD_LIBRARY_PATH=/usr/local/lib"
+
+# Path to keyledsd binary
+ExecStart=/usr/local/bin/keyledsd
+
+# Restart on failure
+Restart=on-failure
+RestartSec=5
+
+# Higher priority for smooth animations
+Nice=-10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=keyledsd
+
+[Install]
+WantedBy=default.target
