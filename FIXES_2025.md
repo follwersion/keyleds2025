@@ -32,6 +32,9 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 - Enhanced Logging: Evdev listener attachment is now logged at `INFO` level for easier verification.
 - Virtual Error Interface: Added `oserror()` to the `Device::error` interface to allow inspection of system error codes.
 
+### Hardware Permissions
+- Added `logitech-g910.rules` for proper udev permission setup. This ensures that the service can access HID and evdev nodes without root privileges.
+
 ### Documentation
 - Added `WARP.md` for AI assistant guidance
 - Added `keyleds-diag.sh` diagnostic and health-check tool

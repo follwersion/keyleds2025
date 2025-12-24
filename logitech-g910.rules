@@ -1,0 +1,8 @@
+# Logitech G910 Orion Spectrum
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c335", MODE="0666"
+# Logitech G910 Orion Spark
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c32b", MODE="0666"
+
+# Evdev nodes for reactive effects
+KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c335", MODE="0666"
+KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c32b", MODE="0666"

@@ -339,6 +339,26 @@ fix_conflicts() {
     fi
 }
 
+install_udev_rules() {
+    echo ""
+    echo "Installing udev rules..."
+    if [ ! -f "$FORK_PATH/logitech-g910.rules" ]; then
+        echo -e "${RED}Error: logitech-g910.rules not found in $FORK_PATH${NC}"
+        return 1
+    fi
+    
+    echo "Copying rules to /etc/udev/rules.d/ (sudo password might be required)..."
+    sudo cp "$FORK_PATH/logitech-g910.rules" /etc/udev/rules.d/logitech-g910.rules
+    if [ $? -eq 0 ]; then
+        echo "Reloading udev rules..."
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+        echo -e "${GREEN}Udev rules installed and reloaded.${NC}"
+    else
+        echo -e "${RED}Failed to install udev rules.${NC}"
+    fi
+}
+
 backup_config() {
     local CONF_FILE="$HOME/.config/keyledsd.conf"
     local BACKUP_FILE="$HOME/.config/keyledsd.conf.bak.$(date +%Y%m%d_%H%M%S)"
@@ -395,9 +415,9 @@ update_from_github() {
         echo -e "${GREEN}Successfully updated source from GitHub.${NC}"
         # Sync the tool if it was updated in the fork
         if [ -f "$FORK_PATH/keyleds-diag.sh" ]; then
-            cp "$FORK_PATH/keyleds-diag.sh" "/home/dolbergkon/Tools/keyleds-diag.sh"
-            chmod +x "/home/dolbergkon/Tools/keyleds-diag.sh"
-            echo -e "${GREEN}Tool synced to /home/dolbergkon/Tools/keyleds-diag.sh${NC}"
+            cp "$FORK_PATH/keyleds-diag.sh" "/home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh"
+            chmod +x "/home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh"
+            echo -e "${GREEN}Tool synced to /home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh${NC}"
         fi
     else
         echo -e "${RED}Failed to pull changes from GitHub.${NC}"
@@ -437,11 +457,12 @@ show_menu() {
     echo "3) Toggle Autostart"
     echo "4) Rebuild & Reinstall"
     echo "5) Fix Conflicts (Kill Solaar/KC)"
-    echo "6) Edit Configuration (Terminal)"
-    echo "7) Edit Configuration (Code-OSS)"
-    echo "8) Backup Configuration"
-    echo "9) Restore Configuration"
-    echo "10) Update Tool/Source from GitHub"
+    echo "6) Install Udev Rules"
+    echo "7) Edit Configuration (Terminal)"
+    echo "8) Edit Configuration (Code-OSS)"
+    echo "9) Backup Configuration"
+    echo "10) Restore Configuration"
+    echo "11) Update Tool/Source from GitHub"
     echo "q) Quit"
     echo ""
     echo -n "Select an option: "
@@ -475,11 +496,12 @@ while true; do
         3) toggle_autostart ;;
         4) rebuild_reinstall ;;
         5) fix_conflicts ;;
-        6) edit_config ;;
-        7) edit_config_code_oss ;;
-        8) backup_config ;;
-        9) restore_config ;;
-        10) update_from_github ;;
+        6) install_udev_rules ;;
+        7) edit_config ;;
+        8) edit_config_code_oss ;;
+        9) backup_config ;;
+        10) restore_config ;;
+        11) update_from_github ;;
         q|quit|exit) exit 0 ;;
         "") continue ;;
         *) echo "Invalid option: $opt" ;;
