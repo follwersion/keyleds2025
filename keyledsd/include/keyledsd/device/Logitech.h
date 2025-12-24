@@ -57,8 +57,8 @@ public:
                         error(const std::string & what, keyleds_error_t code, int oserror=0);
         bool            expected() const override;
         bool            recoverable() const override;
+        int             oserror() const override { return m_oserror; }
         keyleds_error_t code() const { return m_code; }
-        int             oserror() const { return m_oserror; }
     private:
         keyleds_error_t m_code;
         int             m_oserror;

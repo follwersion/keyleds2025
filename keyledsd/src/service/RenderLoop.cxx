@@ -151,7 +151,12 @@ void RenderLoop::run()
             } catch (device::Device::error & error) {
                 // Something went wrong, we will attempt to recover
                 if (!error.recoverable()) { throw; }
-                ERROR("error on device: ", error.what(), ", re-syncing device");
+
+                if (error.oserror() == EBUSY || error.oserror() == EAGAIN) {
+                    WARNING("device busy (errno ", error.oserror(), "), likely conflict with Solaar or keyboard-center");
+                } else {
+                    ERROR("error on device (errno ", error.oserror(), "): ", error.what(), ", re-syncing device");
+                }
 
                 // If errors happen in succession, increase commit delay.
                 // Some devices are slow and need significant time before commit.
@@ -165,12 +170,19 @@ void RenderLoop::run()
 
                 // Recover from error, giving some delay to the device
                 bool success = false;
-                for (unsigned attempt = 0; !success && attempt < 5; ++attempt) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(attempt * 100));
+                for (unsigned attempt = 0; !success && attempt < 10; ++attempt) {
+                    // Exponential-ish backoff: 0, 100, 200, 400, 800, 1000, 1000...
+                    unsigned delay = attempt < 5 ? (attempt * 100) : 1000;
+                    if (delay > 0) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                    }
                     success = m_device.resync();
                 }
 
-                if (!success) { throw; }
+                if (!success) {
+                    CRITICAL("failed to re-sync device after multiple attempts");
+                    throw;
+                }
             }
         }
     } catch (device::Device::error & error) {

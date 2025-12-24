@@ -26,6 +26,12 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 - Includes proper `LD_LIBRARY_PATH` configuration
 - Enables automatic startup on login
 
+### Resilience and Error Recovery
+- Improved error recovery logic in `RenderLoop`: Added exponential backoff and increased retry attempts (up to 10) for device communication errors.
+- Graceful Conflict Handling: The service now specifically detects and logs potential software conflicts (e.g., with Solaar or keyboard-center) when receiving `EBUSY` or `EAGAIN` errors from the device.
+- Enhanced Logging: Evdev listener attachment is now logged at `INFO` level for easier verification.
+- Virtual Error Interface: Added `oserror()` to the `Device::error` interface to allow inspection of system error codes.
+
 ### Documentation
 - Added `WARP.md` for AI assistant guidance
 - Added `keyleds-diag.sh` diagnostic and health-check tool

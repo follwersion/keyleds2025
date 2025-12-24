@@ -320,6 +320,8 @@ bool Logitech::error::recoverable() const
         switch (m_oserror) {
             case EIO:
             case EINTR:
+            case EAGAIN:
+            case EBUSY:
                 return true;
             default:
                 return false;

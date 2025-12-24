@@ -223,6 +223,7 @@ void Service::onDeviceAdded(const tools::device::Description & description)
         for (const auto & devNode : manager->eventDevices()) {
             int fd = open(devNode.c_str(), O_RDONLY | O_NONBLOCK);
             if (fd >= 0) {
+                INFO("attached evdev listener to ", devNode);
                 auto watcher = std::make_unique<tools::FDWatcher>(
                     fd, tools::FDWatcher::Read,
                     std::bind(&Service::onEvdevReady, this, fd, devNode),
