@@ -41,6 +41,13 @@ run_diagnostic() {
         systemctl --user status keyledsd --no-pager
     fi
 
+    echo -n "Checking autostart... "
+    if systemctl --user is-enabled --quiet keyledsd; then
+        echo -e "${GREEN}ENABLED${NC}"
+    else
+        echo -e "${YELLOW}DISABLED${NC}"
+    fi
+
     # 1.1 Check for common service errors in logs
     echo "Scanning logs for common issues..."
     LOG_ERRORS=$(journalctl --user -u keyledsd -n 50 --no-pager)
@@ -362,18 +369,43 @@ update_from_github() {
     cd "$CURRENT_DIR" || exit
 }
 
+toggle_autostart() {
+    echo ""
+    if systemctl --user is-enabled --quiet keyledsd; then
+        echo "Disabling autostart..."
+        systemctl --user disable keyledsd
+        echo -e "${YELLOW}Autostart disabled.${NC}"
+    else
+        echo "Enabling autostart..."
+        systemctl --user enable keyledsd
+        echo -e "${GREEN}Autostart enabled.${NC}"
+    fi
+}
+
+edit_config_code_oss() {
+    local CONF_FILE="$HOME/.config/keyledsd.conf"
+    if [ -f "$CONF_FILE" ]; then
+        echo "Opening configuration with code-oss..."
+        code-oss "$CONF_FILE"
+    else
+        echo -e "${RED}Configuration file not found.${NC}"
+    fi
+}
+
 show_menu() {
     echo ""
     echo "Keyleds Management Tool"
     echo "-----------------------"
     echo "1) Run Diagnostic"
     echo "2) Restart Service"
-    echo "3) Rebuild & Reinstall"
-    echo "4) Fix Conflicts (Kill Solaar/KC)"
-    echo "5) Edit Configuration"
-    echo "6) Backup Configuration"
-    echo "7) Restore Configuration"
-    echo "8) Update Tool/Source from GitHub"
+    echo "3) Toggle Autostart"
+    echo "4) Rebuild & Reinstall"
+    echo "5) Fix Conflicts (Kill Solaar/KC)"
+    echo "6) Edit Configuration (Terminal)"
+    echo "7) Edit Configuration (Code-OSS)"
+    echo "8) Backup Configuration"
+    echo "9) Restore Configuration"
+    echo "10) Update Tool/Source from GitHub"
     echo "q) Quit"
     echo ""
     echo -n "Select an option: "
@@ -384,9 +416,11 @@ if [ $# -gt 0 ]; then
     case $1 in
         diag|diagnostic) run_diagnostic ;;
         restart) restart_service ;;
+        autostart) toggle_autostart ;;
         rebuild|reinstall) rebuild_reinstall ;;
         fix) fix_conflicts ;;
         edit) edit_config ;;
+        code) edit_config_code_oss ;;
         backup) backup_config ;;
         restore) restore_config ;;
         update) update_from_github ;;
@@ -402,12 +436,14 @@ while true; do
     case $opt in
         1) run_diagnostic ;;
         2) restart_service ;;
-        3) rebuild_reinstall ;;
-        4) fix_conflicts ;;
-        5) edit_config ;;
-        6) backup_config ;;
-        7) restore_config ;;
-        8) update_from_github ;;
+        3) toggle_autostart ;;
+        4) rebuild_reinstall ;;
+        5) fix_conflicts ;;
+        6) edit_config ;;
+        7) edit_config_code_oss ;;
+        8) backup_config ;;
+        9) restore_config ;;
+        10) update_from_github ;;
         q|quit|exit) exit 0 ;;
         "") continue ;;
         *) echo "Invalid option: $opt" ;;
