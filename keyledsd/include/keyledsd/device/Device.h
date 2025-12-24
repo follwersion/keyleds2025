@@ -55,6 +55,7 @@ public:
         explicit        error(const std::string & what);
         virtual bool    expected() const = 0;       ///< Error is a normal failure condition
         virtual bool    recoverable() const = 0;    ///< Error recovery can be attempted with resync()
+        virtual int     oserror() const { return 0; }
     };
 
     using key_block_id_type = uint8_t;

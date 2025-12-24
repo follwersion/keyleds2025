@@ -142,18 +142,33 @@ run_diagnostic() {
             if [ -r "/dev/input/$ev" ]; then
                 echo -e "${GREEN}READABLE${NC}"
             else
-                echo -e "${RED}NOT READABLE${NC} (Requires 'input' group or udev rule)"
+                echo -e "${RED}NOT READABLE${NC}"
+                echo -e "    Explanation: Requires 'input' group or udev rule."
+            fi
+            # Check if service has it open
+            if [ -n "$PID" ]; then
+                if ls -l "/proc/$PID/fd" 2>/dev/null | grep -q "$ev"; then
+                    echo -e "    Process link: ${GREEN}ACTIVE${NC}"
+                else
+                    echo -e "    Process link: ${YELLOW}NOT OPENED${NC}"
+                fi
             fi
         done
     fi
 
-    journalctl --user -u keyledsd -n 100 --no-pager | grep -q "found event device"
+    echo -n "Checking user groups... "
+    if groups "$USER" | grep -q "\binput\b"; then
+        echo -e "${GREEN}OK${NC} (Member of 'input')"
+    else
+        echo -e "${YELLOW}WARNING${NC} (Not in 'input' group. Reactive effects might fail on Wayland)"
+    fi
+
+    journalctl --user -u keyledsd -n 100 --no-pager | grep -q "attached evdev listener"
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Evdev listener active in logs${NC}"
     else
         echo -e "${YELLOW}Evdev listener NOT DETECTED in recent logs${NC}"
         echo -e "    Explanation: Reactive effects (like lines on keypress) will not work."
-        echo -e "                 Ensure the user is in the 'input' group and udev rules are active."
     fi
 
     # 5. Conflict Check
@@ -243,8 +258,19 @@ run_diagnostic() {
     fi
 
     if [ "$REBUILD_RECOMMENDED" -eq 1 ]; then
-        echo -e "${YELLOW}Recommendation: Rebuild keyledsd (Option 3) to apply latest changes and ensure library compatibility.${NC}"
+        echo -e "${YELLOW}Recommendation: Rebuild keyledsd (Option 4) to apply latest changes and ensure library compatibility.${NC}"
     fi
+
+    echo ""
+    echo "=== Summary of Potential Fixes ==="
+    echo "If you are experiencing issues, try these steps in order:"
+    echo "1. Run 'Fix Conflicts' (Option 5) to stop Solaar/keyboard-center."
+    echo "2. Restart Service (Option 2)."
+    echo "3. If reactive effects don't work, ensure you are in 'input' group:"
+    echo "   sudo usermod -aG input $USER (then logout and login again)"
+    echo "4. Rebuild & Reinstall (Option 4) if libraries or source changed."
+    echo "5. Check udev rules if permissions are FAILED."
+    echo ""
 
     echo "=== Diagnostic Complete ==="
 }
