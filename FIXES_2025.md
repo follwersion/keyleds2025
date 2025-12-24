@@ -28,6 +28,7 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 
 ### Documentation
 - Added `WARP.md` for AI assistant guidance
+- Added `keyleds-diag.sh` diagnostic and health-check tool
 - Comprehensive build and usage instructions
 
 ## Tested Configuration
