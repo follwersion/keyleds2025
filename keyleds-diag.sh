@@ -55,10 +55,14 @@ run_diagnostic() {
         echo -e "  ${RED}ERROR: DBus name conflict detected!${NC} (Another instance might be running)"
     fi
     if echo "$LOG_ERRORS" | grep -q "device busy"; then
-        echo -e "  ${YELLOW}WARNING: Device busy errors found${NC} (Check for conflicts with Solaar/keyboard-center)"
+        echo -e "  ${YELLOW}WARNING: Device busy errors found${NC}"
+        echo -e "    Explanation: Another program (like Solaar or keyboard-center) is likely holding an exclusive"
+        echo -e "                 lock on the device. Only one program can reliably control HID++ at a time."
     fi
     if echo "$LOG_ERRORS" | grep -q "re-syncing device"; then
-        echo -e "  ${YELLOW}WARNING: Communication resets found${NC} (May indicate unstable connection)"
+        echo -e "  ${YELLOW}WARNING: Communication resets found${NC}"
+        echo -e "    Explanation: The service had to reset the connection. This can be caused by unstable USB"
+        echo -e "                 connections, power management, or protocol collisions."
     fi
 
     # 2. Check Binary and Libraries
@@ -119,6 +123,8 @@ run_diagnostic() {
                     echo -e "  Process link: ${GREEN}ACTIVE${NC}"
                 else
                     echo -e "  Process link: ${YELLOW}NOT OPENED BY SERVICE${NC}"
+                    echo -e "    Explanation: The service is running but hasn't opened this HID node."
+                    echo -e "                 This usually means another program has an exclusive lock on it."
                 fi
             fi
         done
@@ -146,6 +152,8 @@ run_diagnostic() {
         echo -e "${GREEN}Evdev listener active in logs${NC}"
     else
         echo -e "${YELLOW}Evdev listener NOT DETECTED in recent logs${NC}"
+        echo -e "    Explanation: Reactive effects (like lines on keypress) will not work."
+        echo -e "                 Ensure the user is in the 'input' group and udev rules are active."
     fi
 
     # 5. Conflict Check
@@ -230,6 +238,8 @@ run_diagnostic() {
         echo -e "${GREEN}FOUND${NC}"
     else
         echo -e "${YELLOW}NOT FOUND${NC} (Expected logitech-g910.rules)"
+        echo -e "    Explanation: Udev rules grant permissions to access hardware nodes as a non-root user."
+        echo -e "                 Missing rules will prevent the service from communicating with the keyboard."
     fi
 
     if [ "$REBUILD_RECOMMENDED" -eq 1 ]; then
