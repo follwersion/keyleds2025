@@ -23,6 +23,15 @@ run_diagnostic() {
     echo ""
     echo "=== Keyleds Diagnostic ==="
 
+    # 0. System Context
+    echo "Checking system context..."
+    KERNEL=$(uname -r)
+    SESSION_TYPE=$XDG_SESSION_TYPE
+    DE=$XDG_CURRENT_DESKTOP
+    echo -e "  Kernel: ${GREEN}$KERNEL${NC}"
+    echo -e "  Session: ${GREEN}$SESSION_TYPE${NC}"
+    echo -e "  Desktop: ${GREEN}$DE${NC}"
+
     # 1. Check Service Status
     echo -n "Checking keyledsd service... "
     if systemctl --user is-active --quiet keyledsd; then
@@ -174,7 +183,7 @@ run_diagnostic() {
         echo -e "${RED}MISSING${NC} ($CONF_FILE)"
     fi
 
-    # 8. Check Source changes
+    # 8. Check Source and Remote changes
     if [ -d "$FORK_PATH" ]; then
         echo -n "Checking for unbuilt source changes... "
         LATEST_SRC=$(find "$FORK_PATH/keyledsd/src" "$FORK_PATH/libkeyleds/src" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -1 | cut -f1 -d' ')
@@ -187,6 +196,33 @@ run_diagnostic() {
                 echo -e "${GREEN}UP TO DATE${NC}"
             fi
         fi
+
+        echo -n "Checking for remote updates... "
+        cd "$FORK_PATH" || return
+        git fetch --quiet origin master 2>/dev/null
+        UPSTREAM=${1:-'@{u}'}
+        LOCAL=$(git rev-parse @)
+        REMOTE=$(git rev-parse "$UPSTREAM")
+        BASE=$(git merge-base @ "$UPSTREAM")
+
+        if [ "$LOCAL" = "$REMOTE" ]; then
+            echo -e "${GREEN}Local fork is up to date with origin${NC}"
+        elif [ "$LOCAL" = "$BASE" ]; then
+            echo -e "${YELLOW}NEED PULL${NC} (Origin has new updates)"
+        elif [ "$REMOTE" = "$BASE" ]; then
+            echo -e "${YELLOW}NEED PUSH${NC} (Local has unpushed changes)"
+        else
+            echo -e "${RED}DIVERGED${NC}"
+        fi
+        cd - >/dev/null || return
+    fi
+
+    # 9. Check Udev rules
+    echo -n "Checking udev rules... "
+    if [ -f /etc/udev/rules.d/logitech-g910.rules ] || [ -f /usr/lib/udev/rules.d/logitech-g910.rules ]; then
+        echo -e "${GREEN}FOUND${NC}"
+    else
+        echo -e "${YELLOW}NOT FOUND${NC} (Expected logitech-g910.rules)"
     fi
 
     if [ "$REBUILD_RECOMMENDED" -eq 1 ]; then
@@ -247,6 +283,58 @@ rebuild_reinstall() {
     cd "$CURRENT_DIR" || exit
 }
 
+fix_conflicts() {
+    echo ""
+    echo "Stopping conflicting services..."
+    if pgrep solaar >/dev/null; then
+        echo -n "Stopping Solaar... "
+        pkill solaar && echo -e "${GREEN}OK${NC}" || echo -e "${RED}FAILED${NC}"
+    fi
+    if pgrep -f keyboard-center >/dev/null; then
+        echo -n "Stopping keyboard-center... "
+        pkill -f keyboard-center && echo -e "${GREEN}OK${NC}" || echo -e "${RED}FAILED${NC}"
+    fi
+}
+
+backup_config() {
+    local CONF_FILE="$HOME/.config/keyledsd.conf"
+    local BACKUP_FILE="$HOME/.config/keyledsd.conf.bak.$(date +%Y%m%d_%H%M%S)"
+    if [ -f "$CONF_FILE" ]; then
+        cp "$CONF_FILE" "$BACKUP_FILE"
+        echo -e "${GREEN}Backup created: $BACKUP_FILE${NC}"
+    else
+        echo -e "${RED}Configuration file not found.${NC}"
+    fi
+}
+
+restore_config() {
+    local CONF_DIR="$HOME/.config"
+    echo "Available backups:"
+    ls -1 "$CONF_DIR"/keyledsd.conf.bak* 2>/dev/null
+    echo -n "Enter full path of backup to restore (or 'q' to cancel): "
+    read -r backup_path
+    if [ "$backup_path" = "q" ]; then return; fi
+    if [ -f "$backup_path" ]; then
+        cp "$backup_path" "$HOME/.config/keyledsd.conf"
+        echo -e "${GREEN}Configuration restored. Restarting service...${NC}"
+        restart_service
+    else
+        echo -e "${RED}Backup file not found.${NC}"
+    fi
+}
+
+edit_config() {
+    local CONF_FILE="$HOME/.config/keyledsd.conf"
+    local EDITOR=${EDITOR:-nano}
+    if [ -f "$CONF_FILE" ]; then
+        $EDITOR "$CONF_FILE"
+        echo "Reloading configuration..."
+        restart_service
+    else
+        echo -e "${RED}Configuration file not found.${NC}"
+    fi
+}
+
 show_menu() {
     echo ""
     echo "Keyleds Management Tool"
@@ -254,6 +342,10 @@ show_menu() {
     echo "1) Run Diagnostic"
     echo "2) Restart Service"
     echo "3) Rebuild & Reinstall"
+    echo "4) Fix Conflicts (Kill Solaar/KC)"
+    echo "5) Edit Configuration"
+    echo "6) Backup Configuration"
+    echo "7) Restore Configuration"
     echo "q) Quit"
     echo ""
     echo -n "Select an option: "
@@ -265,6 +357,10 @@ if [ $# -gt 0 ]; then
         diag|diagnostic) run_diagnostic ;;
         restart) restart_service ;;
         rebuild|reinstall) rebuild_reinstall ;;
+        fix) fix_conflicts ;;
+        edit) edit_config ;;
+        backup) backup_config ;;
+        restore) restore_config ;;
         *) echo "Unknown command: $1" ;;
     esac
     exit 0
@@ -278,6 +374,10 @@ while true; do
         1) run_diagnostic ;;
         2) restart_service ;;
         3) rebuild_reinstall ;;
+        4) fix_conflicts ;;
+        5) edit_config ;;
+        6) backup_config ;;
+        7) restore_config ;;
         q|quit|exit) exit 0 ;;
         "") continue ;;
         *) echo "Invalid option: $opt" ;;
