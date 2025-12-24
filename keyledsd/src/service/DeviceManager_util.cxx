@@ -63,12 +63,15 @@ std::vector<std::string> findEventDevices(const tools::device::Description & des
     // to same USB device as ours
     std::vector<std::string> result;
     const auto & usbdev = description.parentWithType("usb", "usb_device");
-    if (!usbdev) { return result; }
+    if (!usbdev) {
+        return result;
+    }
 
     const auto & candidates = usbdev->descendantsWithType("input");
     for (const auto & candidate : candidates) {
         auto && devNode = candidate.devNode();
         if (!devNode.empty()) {
+            DEBUG("found event device ", devNode, " for ", description.devNode());
             result.emplace_back(std::forward<decltype(devNode)>(devNode));
         }
     }

@@ -21,6 +21,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
+#include <array>
 #include <regex>
 #include <sstream>
 #include <stdexcept>

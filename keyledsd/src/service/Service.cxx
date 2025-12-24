@@ -15,6 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "keyledsd/service/Service.h"
+#include <algorithm>
+#include <cstring>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <unistd.h>
+#include <vector>
 
 #include "keyleds.h"
 #include "keyledsd/device/Logitech.h"
@@ -197,7 +203,6 @@ void Service::onConfigurationFileChanged(FileWatcher::Event event)
 
 void Service::onDeviceAdded(const tools::device::Description & description)
 {
-    INFO("device added: ", description.devNode());
     try {
         auto device = device::Logitech::open(description.devNode());
         auto manager = std::make_unique<DeviceManager>(
@@ -215,6 +220,19 @@ void Service::onDeviceAdded(const tools::device::Description & description)
                ", <", manager->device().name(), ">");
 
         manager->setPaused(false);
+        for (const auto & devNode : manager->eventDevices()) {
+            int fd = open(devNode.c_str(), O_RDONLY | O_NONBLOCK);
+            if (fd >= 0) {
+                auto watcher = std::make_unique<tools::FDWatcher>(
+                    fd, tools::FDWatcher::Read,
+                    std::bind(&Service::onEvdevReady, this, fd, devNode),
+                    m_loop
+                );
+                m_evdevListeners.push_back({std::move(watcher), fd, devNode});
+            } else {
+                ERROR("Failed to open event device ", devNode, ": ", strerror(errno));
+            }
+        }
         m_devices.emplace_back(std::move(manager));
 
     } catch (device::Device::error & error) {
@@ -222,6 +240,19 @@ void Service::onDeviceAdded(const tools::device::Description & description)
             INFO("not opening device ", description.devNode(), ": ", error.what());
         } else {
             ERROR("not opening device ", description.devNode(), ": ", error.what());
+        }
+    }
+}
+
+void Service::onEvdevReady(int fd, const std::string & devNode)
+{
+    struct input_event ev;
+    while (read(fd, &ev, sizeof(ev)) == sizeof(ev)) {
+        if (ev.type == EV_KEY && ev.value != 2) {
+            if (m_keyStates[ev.code] != ev.value) {
+                m_keyStates[ev.code] = ev.value;
+                handleKeyEvent(devNode, ev.code, ev.value != 0);
+            }
         }
     }
 }
@@ -234,6 +265,19 @@ void Service::onDeviceRemoved(const tools::device::Description & description)
                            });
     if (it != m_devices.end()) {
         auto manager = std::move(*it);
+
+        const auto & evDevs = manager->eventDevices();
+        m_evdevListeners.erase(
+            std::remove_if(m_evdevListeners.begin(), m_evdevListeners.end(),
+                [&evDevs](const auto & listener) {
+                    if (std::find(evDevs.begin(), evDevs.end(), listener.devNode) != evDevs.end()) {
+                        close(listener.fd);
+                        return true;
+                    }
+                    return false;
+                }),
+            m_evdevListeners.end()
+        );
         if (it != m_devices.end() - 1) { *it = std::move(m_devices.back()); }
         m_devices.pop_back();
 

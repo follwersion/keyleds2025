@@ -58,12 +58,21 @@ static int toString(lua_State * lua)
     return 1;
 }
 
+static int eq(lua_State * lua)
+{
+    const auto * key1 = lua_to<const KeyDatabase::Key *>(lua, 1);
+    const auto * key2 = lua_to<const KeyDatabase::Key *>(lua, 2);
+    lua_pushboolean(lua, key1->index == key2->index);
+    return 1;
+}
+
 /****************************************************************************/
 
 const char * const metatable<const KeyDatabase::Key *>::name = "LKey";
 const struct luaL_Reg metatable<const KeyDatabase::Key *>::meta_methods[] = {
     { "__index",    index},
     { "__tostring", toString },
+    { "__eq",       eq },
     { nullptr,      nullptr}
 };
 

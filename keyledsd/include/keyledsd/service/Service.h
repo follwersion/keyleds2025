@@ -26,6 +26,7 @@
 #include "keyledsd/tools/DeviceWatcher.h"
 #include "keyledsd/tools/Event.h"
 #include "keyledsd/tools/FileWatcher.h"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -100,6 +101,15 @@ private:
 
     DeviceWatcher       m_deviceWatcher;    ///< Connection to libudev
     FileWatcher::subscription m_fileWatcherSub; ///< Notifications for conf change
+
+    struct EvdevListener {
+        std::unique_ptr<tools::FDWatcher> watcher;
+        int fd;
+        std::string devNode;
+    };
+    std::vector<EvdevListener> m_evdevListeners;
+    void                onEvdevReady(int fd, const std::string & devNode);
+    std::map<uint16_t, int> m_keyStates;
 };
 
 /****************************************************************************/

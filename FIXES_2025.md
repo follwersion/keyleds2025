@@ -9,6 +9,14 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 - This fixes the build error: "Compatibility with CMake < 3.5 has been removed"
 - Tested with CMake 4.1.1
 
+### Lua Plugin Fixes
+- Fixed a bug in `reactive-hlines.lua` where the animation buffer was being garbage collected prematurely due to weak table values.
+- Implemented `__eq` operator for Lua `Key` objects to allow reliable key comparisons.
+- Fixed animation timing in Lua plugins by correctly passing delta time instead of total elapsed time.
+
+### Wayland Compatibility
+- Added direct `evdev` event listener to capture keyboard events independently of X11/XWayland, enabling key-reactive effects on Wayland sessions.
+
 ### G910 Layout Fixes
 - Fixed G910 keyboard layout loading
 - Layout symlinks now properly reference actual layout files

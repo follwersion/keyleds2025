@@ -54,7 +54,7 @@ end
 -- Play animation for given key
 function react(kb, key)
     local line, idx = findKey(key)
-    if not line then print("Key ", key, " not found") return end
+    if not line then return end
 
     kb[line[idx]] = fade(fadeTime, color, transparent)
     for i = 1, math.max(idx - 1, #line - idx) do
@@ -70,12 +70,12 @@ end
 
 -- Weak table of active animations and their buffer, used for rendering
 buffers = {}
-setmetatable(buffers, { __mode = 'kv' })
+setmetatable(buffers, { __mode = 'k' })
 
 -- Invoked whenever a key is pressed or release; trigger the animation
 function onKeyEvent(key, isPress)
     if not isPress then return end
-    buffer = RenderTarget:new()
+    local buffer = RenderTarget:new()
     local thread = thread(react, buffer, key)
     buffers[thread] = buffer
 end
