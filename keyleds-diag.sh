@@ -335,6 +335,33 @@ edit_config() {
     fi
 }
 
+update_from_github() {
+    echo ""
+    echo "Updating tool and source from GitHub..."
+    if [ ! -d "$FORK_PATH" ]; then
+        echo -e "${RED}Error: Fork directory not found at $FORK_PATH${NC}"
+        return 1
+    fi
+    
+    local CURRENT_DIR=$(pwd)
+    cd "$FORK_PATH" || return 1
+    
+    echo "Pulling latest changes..."
+    git pull origin master
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Successfully updated source from GitHub.${NC}"
+        # Sync the tool if it was updated in the fork
+        if [ -f "$FORK_PATH/keyleds-diag.sh" ]; then
+            cp "$FORK_PATH/keyleds-diag.sh" "/home/dolbergkon/Tools/keyleds-diag.sh"
+            chmod +x "/home/dolbergkon/Tools/keyleds-diag.sh"
+            echo -e "${GREEN}Tool synced to /home/dolbergkon/Tools/keyleds-diag.sh${NC}"
+        fi
+    else
+        echo -e "${RED}Failed to pull changes from GitHub.${NC}"
+    fi
+    cd "$CURRENT_DIR" || exit
+}
+
 show_menu() {
     echo ""
     echo "Keyleds Management Tool"
@@ -346,6 +373,7 @@ show_menu() {
     echo "5) Edit Configuration"
     echo "6) Backup Configuration"
     echo "7) Restore Configuration"
+    echo "8) Update Tool/Source from GitHub"
     echo "q) Quit"
     echo ""
     echo -n "Select an option: "
@@ -361,6 +389,7 @@ if [ $# -gt 0 ]; then
         edit) edit_config ;;
         backup) backup_config ;;
         restore) restore_config ;;
+        update) update_from_github ;;
         *) echo "Unknown command: $1" ;;
     esac
     exit 0
@@ -378,6 +407,7 @@ while true; do
         5) edit_config ;;
         6) backup_config ;;
         7) restore_config ;;
+        8) update_from_github ;;
         q|quit|exit) exit 0 ;;
         "") continue ;;
         *) echo "Invalid option: $opt" ;;
