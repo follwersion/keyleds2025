@@ -15,9 +15,10 @@ This tool is designed to help maintain and troubleshoot the `keyledsd` service f
     - **Udev rule verification**.
 - **Service Management**:
     - **Restart**: Quickly restarts the `keyledsd` user service.
+    - **Toggle Autostart**: Enables or disables the service to start automatically on login.
     - **Fix Conflicts**: Automatically stops conflicting services like Solaar or keyboard-center.
 - **Configuration Management**:
-    - **Edit**: Opens the configuration file in your default editor.
+    - **Edit**: Opens the configuration file in your default editor (Terminal or Code-OSS).
     - **Backup/Restore**: Easily create timestamped backups or restore from them.
 - **Rebuild & Reinstall**: Automates the compilation and installation process from the source fork at `$HOME/keyleds-fork`.
 - **Maintenance**:
@@ -36,6 +37,8 @@ You can also run specific actions directly:
 ```bash
 $HOME/keyleds-diag.sh diag      # Run diagnostics
 $HOME/keyleds-diag.sh restart   # Restart service
+$HOME/keyleds-diag.sh autostart # Toggle autostart
 $HOME/keyleds-diag.sh rebuild   # Rebuild and reinstall
+$HOME/keyleds-diag.sh code      # Edit config with Code-OSS
 $HOME/keyleds-diag.sh update    # Update tool and source
 ```
