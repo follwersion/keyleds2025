@@ -17,7 +17,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-FORK_PATH="/home/dolbergkon/g910/keyleds-fork"
+FORK_PATH="${FORK_PATH:-$HOME/Tools/g910/keyleds-fork}"
+DEPLOY_PATH="${DEPLOY_PATH:-$HOME/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh}"
 
 run_diagnostic() {
     echo ""
@@ -66,6 +67,8 @@ run_diagnostic() {
     fi
 
     # 2. Check Binary and Libraries
+    BINARY_TIME=0           # missing binary => older than any source => rebuild
+    REBUILD_RECOMMENDED=0
     echo -n "Checking keyledsd binary... "
     if [ -f /usr/local/bin/keyledsd ]; then
         echo -e "${GREEN}FOUND${NC} (/usr/local/bin/keyledsd)"
@@ -415,9 +418,9 @@ update_from_github() {
         echo -e "${GREEN}Successfully updated source from GitHub.${NC}"
         # Sync the tool if it was updated in the fork
         if [ -f "$FORK_PATH/keyleds-diag.sh" ]; then
-            cp "$FORK_PATH/keyleds-diag.sh" "/home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh"
-            chmod +x "/home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh"
-            echo -e "${GREEN}Tool synced to /home/dolbergkon/Tools/keyledsd_diagnosis/keyleds-diag.sh${NC}"
+            cp "$FORK_PATH/keyleds-diag.sh" "$DEPLOY_PATH"
+            chmod +x "$DEPLOY_PATH"
+            echo -e "${GREEN}Tool synced to $DEPLOY_PATH${NC}"
         fi
     else
         echo -e "${RED}Failed to pull changes from GitHub.${NC}"

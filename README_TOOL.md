@@ -20,7 +20,7 @@ This tool is designed to help maintain and troubleshoot the `keyledsd` service f
 - **Configuration Management**:
     - **Edit**: Opens the configuration file in your default editor (Terminal or Code-OSS).
     - **Backup/Restore**: Easily create timestamped backups or restore from them.
-- **Rebuild & Reinstall**: Automates the compilation and installation process from the source fork at `/home/dolbergkon/g910/keyleds-fork`.
+- **Rebuild & Reinstall**: Automates the compilation and installation process from the source fork at `~/Tools/g910/keyleds-fork`.
 - **Maintenance**:
     - **Update Tool/Source**: Pulls the latest version from GitHub and syncs the tool.
 
@@ -29,16 +29,16 @@ This tool is designed to help maintain and troubleshoot the `keyledsd` service f
 ### Interactive Mode
 Run the script without arguments to use the interactive menu:
 ```bash
-/home/dolbergkon/Tools/keyleds-diag.sh
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh
 ```
 
 ### Non-Interactive Mode
 You can also run specific actions directly:
 ```bash
-/home/dolbergkon/Tools/keyleds-diag.sh diag      # Run diagnostics
-/home/dolbergkon/Tools/keyleds-diag.sh restart   # Restart service
-/home/dolbergkon/Tools/keyleds-diag.sh autostart # Toggle autostart
-/home/dolbergkon/Tools/keyleds-diag.sh rebuild   # Rebuild and reinstall
-/home/dolbergkon/Tools/keyleds-diag.sh code      # Edit config with Code-OSS
-/home/dolbergkon/Tools/keyleds-diag.sh update    # Update tool and source
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh diag      # Run diagnostics
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh restart   # Restart service
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh autostart # Toggle autostart
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh rebuild   # Rebuild and reinstall
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh code      # Edit config with Code-OSS
+~/Tools/g910/keyledsd_diagnosis/keyleds-diag.sh update    # Update tool and source
 ```

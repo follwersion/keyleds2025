@@ -44,14 +44,10 @@ Thoroughly tested on:
 - **LUA**: LuaJIT 2.1.1753364724
 - **Hardware**: Logitech G910 Orion Spectrum
 
-### Verified Working Features
+### Verified Working
 ✅ CMake configuration completes without errors  
 ✅ All targets build successfully (libkeyleds, keyledsd, keyledsctl)  
-✅ Keyboard detection and initialization  
-✅ LED control and animations (all effects)  
-✅ LUA scripting engine and effects  
-✅ Profile switching based on window context  
-✅ G-keys support and configuration  
+✅ Daemon starts and drives the keyboard  
 ✅ Systemd service integration  
 
 ### Build Verification
@@ -100,9 +96,8 @@ Given that CMake 3.5 is 9 years old, this should affect a negligible number of u
 ## Checklist
 
 - [x] Tested on target hardware (G910)
-- [x] All features verified working
-- [x] No functional changes to codebase
-- [x] Documentation updated
+- [x] Build, install, and daemon startup verified
+- [x] This PR's changes are limited to CMake version requirements and docs
 - [x] Backward compatibility maintained
 - [x] Build succeeds on modern systems
 

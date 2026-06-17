@@ -12,14 +12,9 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 ### Lua Plugin Fixes
 - Fixed a bug in `reactive-hlines.lua` where the animation buffer was being garbage collected prematurely due to weak table values.
 - Implemented `__eq` operator for Lua `Key` objects to allow reliable key comparisons.
-- Fixed animation timing in Lua plugins by correctly passing delta time instead of total elapsed time.
 
 ### Wayland Compatibility
-- Added direct `evdev` event listener to capture keyboard events independently of X11/XWayland, enabling key-reactive effects on Wayland sessions.
-
-### G910 Layout Fixes
-- Fixed G910 keyboard layout loading
-- Layout symlinks now properly reference actual layout files
+- Added direct `evdev` event listener to capture keyboard events independently of X11/XWayland, enabling key-reactive effects on Wayland sessions. Key delivery is gated per session type (evdev on Wayland, XInput on X11) so a keypress is not dispatched twice.
 
 ### Systemd Service Template
 - Added `keyledsd.service.example` for easy systemd user service setup
@@ -33,7 +28,7 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 - Virtual Error Interface: Added `oserror()` to the `Device::error` interface to allow inspection of system error codes.
 
 ### Hardware Permissions
-- Added `logitech-g910.rules` for proper udev permission setup. This ensures that the service can access HID and evdev nodes without root privileges.
+- Added `logitech-g910.rules` granting access to the active console user via `TAG+="uaccess"` (logind ACLs), so the service reaches HID and evdev nodes without root privileges and without world-readable input devices.
 
 ### Documentation
 - Added `WARP.md` for AI assistant guidance
@@ -71,20 +66,16 @@ systemctl --user daemon-reload
 systemctl --user enable --now keyledsd.service
 ```
 
-## Verified Working Features
+## Verified Working (Logitech G910)
 
 ✅ Build completes without errors  
-✅ All keyboard models supported  
 ✅ LED control and animations  
 ✅ LUA scripting effects  
-✅ Profile switching  
-✅ G-keys support  
 ✅ Systemd autostart  
 
 ## Issues Fixed
 
-- #4629: CMake 4.x compatibility
-- G910 layout loading errors
+- CMake 4.x compatibility
 - Library path issues with /usr/local installation
 - Missing systemd service template
 
