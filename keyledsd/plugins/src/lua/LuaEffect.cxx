@@ -218,13 +218,10 @@ void LuaEffect::init()
 void LuaEffect::render(milliseconds elapsed, RenderTarget & target)
 {
     if (!m_enabled) { return; }
-    auto delta = elapsed - m_lastElapsed;
-    m_lastElapsed = elapsed;
-
     auto lua = m_state.get();
 
-    Environment(lua).stepInterpolators(delta);
-    stepThreads(delta);
+    Environment(lua).stepInterpolators(elapsed);
+    stepThreads(elapsed);
 
     SAVE_TOP(lua);
     lua_push(lua, &target);                         // push(rendertarget)

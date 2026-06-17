@@ -109,7 +109,7 @@ private:
     };
     std::vector<EvdevListener> m_evdevListeners;
     void                onEvdevReady(int fd, const std::string & devNode);
-    std::map<uint16_t, int> m_keyStates;
+    std::map<std::pair<std::string, uint16_t>, int> m_keyStates;
 };
 
 /****************************************************************************/

@@ -67,7 +67,6 @@ private:
     EffectService & m_service;      ///< For communicating with keyleds
     state_ptr       m_state;        ///< Lua container this effect's scripts runs in
     bool            m_enabled;      ///< Should render/event handlers be run?
-    milliseconds    m_lastElapsed = milliseconds::zero(); ///< Time of last render call
 };
 
 /****************************************************************************/

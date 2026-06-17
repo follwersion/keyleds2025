@@ -46,7 +46,7 @@ endforeach()
 
 
 IF(WITH_LUA)
-    add_library(fx_lua MODULE
+    set(lua_SRCS
         src/lua/Environment.cxx
         src/lua/LuaEffect.cxx
         src/lua/lua_Interpolator.cxx
@@ -58,13 +58,27 @@ IF(WITH_LUA)
         src/lua/lua_Thread.cxx
         src/lua/lua_common.cxx
         src/lua/lua_types.cxx
-        src/lua.cxx
     )
+    add_library(fx_lua MODULE ${lua_SRCS} src/lua.cxx)
     target_compile_options(fx_lua PRIVATE ${LUA_CFLAGS_OTHER})
     target_include_directories(fx_lua PRIVATE "include" ${LUA_INCLUDE_DIRS})
     target_link_libraries(fx_lua plugin_helper common ${LUA_LIBRARIES})
     set_target_properties(fx_lua PROPERTIES PREFIX "")
     set(module_TARGETS ${module_TARGETS} fx_lua)
+
+    IF(WITH_TESTS)
+        # fx_lua is a MODULE with hidden visibility and no installable archive, so the
+        # test recompiles ${lua_SRCS} to reach LuaEffect's non-exported symbols.
+        find_package(GTest REQUIRED)
+        find_package(Threads REQUIRED)
+        add_executable(test-lua ${lua_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/../tests/LuaEffect.cxx)
+        target_compile_options(test-lua PRIVATE ${LUA_CFLAGS_OTHER})
+        target_include_directories(test-lua PRIVATE "include" ${LUA_INCLUDE_DIRS})
+        target_include_directories(test-lua SYSTEM PRIVATE ${GTEST_INCLUDE_DIRS})
+        target_link_libraries(test-lua plugin_helper common ${LUA_LIBRARIES}
+                              ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+        add_test(NAME lua COMMAND test-lua)
+    ENDIF(WITH_TESTS)
 ENDIF(WITH_LUA)
 
 ##############################################################################

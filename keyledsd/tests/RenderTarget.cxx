@@ -17,6 +17,7 @@
 #include "keyledsd/RenderTarget.h"
 
 #include "keyledsd/tools/accelerated.h"
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <type_traits>
 

@@ -16,10 +16,12 @@
  */
 #include "keyledsd/service/Service.h"
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <linux/input.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 #include "keyleds.h"
@@ -80,6 +82,18 @@ static std::string to_string(const std::vector<std::pair<std::string, std::strin
     return out.str();
 }
 
+// Wayland: keys come from the evdev listener (XInput sees nothing under Wayland).
+// X11: keys come from the XInput path. Picking one per session avoids dispatching
+// every keypress twice (the X11 context/window path stays active regardless).
+static bool useEvdevForKeys()
+{
+    if (const char * wl = ::getenv("WAYLAND_DISPLAY"); wl && *wl) { return true; }
+    if (const char * t = ::getenv("XDG_SESSION_TYPE"); t && std::strcmp(t, "wayland") == 0) {
+        return true;
+    }
+    return false;
+}
+
 /****************************************************************************/
 
 Service::Service(EffectManager & effectManager, tools::FileWatcher & fileWatcher,
@@ -111,8 +125,10 @@ void Service::addDisplay(std::unique_ptr<tools::xlib::Display> display)
     using namespace std::placeholders;
     connect(displayManager->contextChanged, this,
             std::bind(&Service::setContext, this, _1));
-    connect(displayManager->keyEventReceived, this,
-            std::bind(&Service::handleKeyEvent, this, _1, _2, _3));
+    if (!useEvdevForKeys()) {
+        connect(displayManager->keyEventReceived, this,
+                std::bind(&Service::handleKeyEvent, this, _1, _2, _3));
+    }
 
     displayManager->scanDevices();
     setContext(displayManager->currentContext());
@@ -220,18 +236,20 @@ void Service::onDeviceAdded(const tools::device::Description & description)
                ", <", manager->device().name(), ">");
 
         manager->setPaused(false);
-        for (const auto & devNode : manager->eventDevices()) {
-            int fd = open(devNode.c_str(), O_RDONLY | O_NONBLOCK);
-            if (fd >= 0) {
-                INFO("attached evdev listener to ", devNode);
-                auto watcher = std::make_unique<tools::FDWatcher>(
-                    fd, tools::FDWatcher::Read,
-                    std::bind(&Service::onEvdevReady, this, fd, devNode),
-                    m_loop
-                );
-                m_evdevListeners.push_back({std::move(watcher), fd, devNode});
-            } else {
-                ERROR("Failed to open event device ", devNode, ": ", strerror(errno));
+        if (useEvdevForKeys()) {
+            for (const auto & devNode : manager->eventDevices()) {
+                int fd = open(devNode.c_str(), O_RDONLY | O_NONBLOCK);
+                if (fd >= 0) {
+                    INFO("attached evdev listener to ", devNode);
+                    auto watcher = std::make_unique<tools::FDWatcher>(
+                        fd, tools::FDWatcher::Read,
+                        std::bind(&Service::onEvdevReady, this, fd, devNode),
+                        m_loop
+                    );
+                    m_evdevListeners.push_back({std::move(watcher), fd, devNode});
+                } else {
+                    ERROR("Failed to open event device ", devNode, ": ", strerror(errno));
+                }
             }
         }
         m_devices.emplace_back(std::move(manager));
@@ -250,8 +268,9 @@ void Service::onEvdevReady(int fd, const std::string & devNode)
     struct input_event ev;
     while (read(fd, &ev, sizeof(ev)) == sizeof(ev)) {
         if (ev.type == EV_KEY && ev.value != 2) {
-            if (m_keyStates[ev.code] != ev.value) {
-                m_keyStates[ev.code] = ev.value;
+            auto stateKey = std::make_pair(devNode, ev.code);
+            if (m_keyStates[stateKey] != ev.value) {
+                m_keyStates[stateKey] = ev.value;
                 handleKeyEvent(devNode, ev.code, ev.value != 0);
             }
         }
@@ -270,15 +289,26 @@ void Service::onDeviceRemoved(const tools::device::Description & description)
         const auto & evDevs = manager->eventDevices();
         m_evdevListeners.erase(
             std::remove_if(m_evdevListeners.begin(), m_evdevListeners.end(),
-                [&evDevs](const auto & listener) {
+                [&evDevs](auto & listener) {
                     if (std::find(evDevs.begin(), evDevs.end(), listener.devNode) != evDevs.end()) {
-                        close(listener.fd);
+                        listener.watcher.reset();   // stop uv_poll before closing the fd
+                        if (close(listener.fd) < 0) {
+                            WARNING("closing evdev fd failed: ", strerror(errno));
+                        }
                         return true;
                     }
                     return false;
                 }),
             m_evdevListeners.end()
         );
+        // Drop stale key states for this device's nodes (avoids stuck keys on re-add)
+        for (auto stateIt = m_keyStates.begin(); stateIt != m_keyStates.end(); ) {
+            if (std::find(evDevs.begin(), evDevs.end(), stateIt->first.first) != evDevs.end()) {
+                stateIt = m_keyStates.erase(stateIt);
+            } else {
+                ++stateIt;
+            }
+        }
         if (it != m_devices.end() - 1) { *it = std::move(m_devices.back()); }
         m_devices.pop_back();
 
