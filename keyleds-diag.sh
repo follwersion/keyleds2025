@@ -19,6 +19,8 @@ NC='\033[0m' # No Color
 
 FORK_PATH="${FORK_PATH:-$HOME/keyleds-fork}"
 DEPLOY_PATH="${DEPLOY_PATH:-$HOME/keyleds-diag.sh}"
+# anchored: bare 'keyboard-center' also matches processes that merely reference keyboard-center paths
+KC_DAEMON='^python3 -m keyboard-center'
 
 run_diagnostic() {
     echo ""
@@ -179,7 +181,7 @@ run_diagnostic() {
     if pgrep solaar >/dev/null; then
         echo -e "${YELLOW}WARNING: Solaar is running${NC} (May conflict with HID++ protocol)"
     fi
-    if pgrep -f keyboard-center >/dev/null; then
+    if pgrep -f "$KC_DAEMON" >/dev/null; then
         echo -e "${YELLOW}WARNING: keyboard-center is running${NC} (May conflict with G/M keys)"
     fi
 
@@ -336,9 +338,9 @@ fix_conflicts() {
         echo -n "Stopping Solaar... "
         pkill solaar && echo -e "${GREEN}OK${NC}" || echo -e "${RED}FAILED${NC}"
     fi
-    if pgrep -f keyboard-center >/dev/null; then
+    if pgrep -f "$KC_DAEMON" >/dev/null; then
         echo -n "Stopping keyboard-center... "
-        pkill -f keyboard-center && echo -e "${GREEN}OK${NC}" || echo -e "${RED}FAILED${NC}"
+        pkill -f "$KC_DAEMON" && echo -e "${GREEN}OK${NC}" || echo -e "${RED}FAILED${NC}"
     fi
 }
 
