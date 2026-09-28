@@ -28,7 +28,7 @@ This fork contains fixes for building and running keyleds on modern Linux distri
 - Virtual Error Interface: Added `oserror()` to the `Device::error` interface to allow inspection of system error codes.
 
 ### Hardware Permissions
-- Added `logitech-g910.rules` granting access to the active console user via `TAG+="uaccess"` (logind ACLs), so the service reaches HID and evdev nodes without root privileges and without world-readable input devices.
+- Added `logitech-g910.rules` granting access to the active console user via `TAG+="uaccess"` (logind ACLs), so the service reaches HID and evdev nodes without root privileges and without world-readable input devices. Install it as `/etc/udev/rules.d/70-logitech-g910.rules` (`keyleds-diag.sh` option 6): the tag only takes effect when set before `73-seat-late.rules`, so an unprefixed name is silently ignored.
 
 ### Documentation
 - Added `WARP.md` for AI assistant guidance

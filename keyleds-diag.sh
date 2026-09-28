@@ -252,10 +252,10 @@ run_diagnostic() {
 
     # 9. Check Udev rules
     echo -n "Checking udev rules... "
-    if [ -f /etc/udev/rules.d/logitech-g910.rules ] || [ -f /usr/lib/udev/rules.d/logitech-g910.rules ]; then
+    if [ -f /etc/udev/rules.d/70-logitech-g910.rules ] || [ -f /usr/lib/udev/rules.d/70-logitech-g910.rules ]; then
         echo -e "${GREEN}FOUND${NC}"
     else
-        echo -e "${YELLOW}NOT FOUND${NC} (Expected logitech-g910.rules)"
+        echo -e "${YELLOW}NOT FOUND${NC} (Expected 70-logitech-g910.rules)"
         echo -e "    Explanation: Udev rules grant permissions to access hardware nodes as a non-root user."
         echo -e "                 Missing rules will prevent the service from communicating with the keyboard."
     fi
@@ -351,7 +351,8 @@ install_udev_rules() {
     fi
     
     echo "Copying rules to /etc/udev/rules.d/ (sudo password might be required)..."
-    sudo cp "$FORK_PATH/logitech-g910.rules" /etc/udev/rules.d/logitech-g910.rules
+    # 70- prefix: uaccess only counts if tagged before 73-seat-late.rules
+    sudo cp "$FORK_PATH/logitech-g910.rules" /etc/udev/rules.d/70-logitech-g910.rules
     if [ $? -eq 0 ]; then
         echo "Reloading udev rules..."
         sudo udevadm control --reload-rules
