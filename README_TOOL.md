@@ -26,6 +26,9 @@ This tool is designed to help maintain and troubleshoot the `keyledsd` service f
 
 ## Usage
 
+### Paths
+The tool expects the fork at `~/keyleds-fork` and its deployed copy at `~/keyleds-diag.sh`. To use other locations, set `FORK_PATH` and `DEPLOY_PATH` in `~/.config/keyleds-diag.env`.
+
 ### Interactive Mode
 Run the script without arguments to use the interactive menu:
 ```bash

@@ -17,6 +17,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# local path overrides, kept outside the repo
+# shellcheck source=/dev/null
+[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/keyleds-diag.env" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/keyleds-diag.env"
 FORK_PATH="${FORK_PATH:-$HOME/keyleds-fork}"
 DEPLOY_PATH="${DEPLOY_PATH:-$HOME/keyleds-diag.sh}"
 # anchored: bare 'keyboard-center' also matches processes that merely reference keyboard-center paths
