@@ -87,6 +87,7 @@ std::unique_ptr<xlib::Window> xlib::Display::getActiveWindow()
 {
     std::string data = m_root.getProperty(atom(activeWindowAtom), XA_WINDOW);
     ::Window handle;
+    if (data.size() < sizeof(handle)) { return nullptr; }
     memcpy(&handle, data.data(), sizeof(handle));
     if (handle == 0) { return nullptr; }
     return std::make_unique<Window>(*this, handle);
@@ -183,6 +184,8 @@ std::string xlib::Window::iconName() const
 
 std::string xlib::Window::getProperty(Atom atom, Atom type) const
 {
+    // None: atom not interned (e.g. no EWMH WM yet), XGetWindowProperty would raise an uncaught BadAtom
+    if (atom == None) { return std::string(); }
     Atom actualType;
     int actualFormat;
     unsigned long nItems, bytesAfter;
