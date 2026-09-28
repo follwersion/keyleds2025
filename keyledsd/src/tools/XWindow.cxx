@@ -271,6 +271,8 @@ void Device::setEventMask(const std::vector<int> & events)
 
 std::string Device::getProperty(Atom atom, Atom type) const
 {
+    // None: atom not interned (e.g. XWayland), XIGetProperty would raise an uncaught BadAtom
+    if (atom == None) { return std::string(); }
     Atom actualType;
     int actualFormat;
     unsigned long nItems, bytesAfter;
